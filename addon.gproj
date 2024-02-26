@@ -1,0 +1,8 @@
+GameProject {
+ ID "SpectatorMode"
+ GUID "60B52606D9BBF81A"
+ TITLE "Spectator Mode"
+ Dependencies {
+  "58D0FB3206B6F859"
+ }
+}
