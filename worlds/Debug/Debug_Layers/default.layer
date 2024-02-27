@@ -1,0 +1,6 @@
+GameEntity : "{2F3375E395C46AB3}Prefabs/Characters/Heads/Head_BaseBody_01.et" {
+ coords 128.975 1 125.025
+}
+SCR_ChimeraCharacter : "{37578B1666981FCE}Prefabs/Characters/Core/Character_Base.et" {
+ coords 127.216 1 124.668
+}
