@@ -188,7 +188,7 @@ class DEUS_SpectatorComponent extends ScriptComponent {
  	
 	//------------------------------------------------------------------------------------------------
 	override void EOnPostFrame(IEntity owner, float timeSlice) {
-	    ApplyCameraTransform();;
+	    ApplyCameraTransform();
 	}
 	
 	//------------------------------------------------------------------------------------------------
@@ -288,7 +288,7 @@ class DEUS_SpectatorComponent extends ScriptComponent {
 	private void ApplyCameraTransform() {
 		if (IsSpectating && OGCamera) {
 	       	float adjustedLerpFactor = Math.Clamp(LerpFactor, 0, 1);
-	
+			
 	        CurrentCameraTransform[3] = vector.Lerp(CurrentCameraTransform[3], TargetCameraTransform[3], adjustedLerpFactor);
 			vector angles = vector.Lerp(Math3D.MatrixToAngles(CurrentCameraTransform), Math3D.MatrixToAngles(TargetCameraTransform), adjustedLerpFactor);
 			Math3D.AnglesToMatrix(angles, CurrentCameraTransform);
