@@ -3,6 +3,7 @@ class DEUS_SpectatorComponentClass extends ScriptComponentClass { }
 
 class DEUS_SpectatorComponent extends ScriptComponent {
 	private     CameraBase                             	OGCamera;
+	private     PlayerCamera                            SpectatorCamera;
 	private     CharacterIdentityComponent             	IdentityComponent;
 	private     EquipedLoadoutStorageComponent         	ELSComponent;
 	private     IEntity                                	HeadCoverEntity;
@@ -40,8 +41,8 @@ class DEUS_SpectatorComponent extends ScriptComponent {
 	}
 	
 	//------------------------------------------------------------------------------------------------
-    // Replication Methods
-    //------------------------------------------------------------------------------------------------
+  // Replication Methods
+  //------------------------------------------------------------------------------------------------
  	
 	//------------------------------------------------------------------------------------------------
 	private void SetBeingSpectated(IEntity ent, bool state) {
@@ -218,16 +219,20 @@ class DEUS_SpectatorComponent extends ScriptComponent {
     //------------------------------------------------------------------------------------------------
 	
 	//------------------------------------------------------------------------------------------------
+	SCR_CameraManager CamManager;
 	void StartSpectating(IEntity ent) {
 		if (!Input) {
 			Input = g_Game.GetInputManager();
 		}
 		
-		Input.AddActionListener("MenuOpen", EActionTrigger.DOWN, OnEscapeDown);
+		SCR_EditorManagerEntity.GetInstance().GetOnClosed().Insert(OnEditorClosed);
+		SCR_EditorManagerEntity.GetInstance().GetOnOpened().Insert(OnEditorOpened);
+		SCR_EditorManagerEntity.ToggleInstance();
+		
 		
 		SCR_DamageManagerComponent dmgMngr = SCR_DamageManagerComponent.GetDamageManager(ent);
 		if (dmgMngr) {
-			ScriptedHitZone hz = ScriptedHitZone.Cast(dmgMngr.GetDefaultHitZone());
+			SCR_HitZone hz = SCR_HitZone.Cast(dmgMngr.GetDefaultHitZone());
 			if (hz) {
 				OnDamageStateChangedSpec = hz.GetOnDamageStateChanged();
 				OnDamageStateChangedSpec.Insert(OnSpectatedEntityDamageStateChanged);
@@ -235,22 +240,7 @@ class DEUS_SpectatorComponent extends ScriptComponent {
 		}
 		
 		SCR_ChimeraCharacter OGEntity = SCR_ChimeraCharacter.Cast(GetOwner());
-		
-		/* CharacterController = OGEntity.GetCharacterController();
-		if (CharacterController) {
-			CharacterController.SetDisableViewControls(true);
-			CharacterController.SetDisableWeaponControls(true);
-			CharacterController.SetDisableMovementControls(true);
-		} */
-		
-		OGCamera = g_ARGame.GetCameraManager().CurrentCamera();
-		
-		CurrentVerticalFOV = OGCamera.GetVerticalFOV();
-		
-		if (OGCamera) {
-	        OGCamera.GetTransform(CurrentCameraTransform);
-	    }
-		
+				
 		IdentityComponent = CharacterIdentityComponent.Cast(ent.FindComponent(CharacterIdentityComponent));
 		
 		ELSComponent = EquipedLoadoutStorageComponent.Cast(ent.FindComponent(EquipedLoadoutStorageComponent));
@@ -259,10 +249,37 @@ class DEUS_SpectatorComponent extends ScriptComponent {
 		}
 		
 		SetBeingSpectated(ent, true);
+	}
+	
+	void OnEditorClosed() {
+		Input.AddActionListener("MenuOpen", EActionTrigger.DOWN, OnEscapeDown);
+		
+		/* CharacterController = OGEntity.GetCharacterController();
+		if (CharacterController) {
+			CharacterController.SetDisableViewControls(true);
+			CharacterController.SetDisableWeaponControls(true);
+			CharacterController.SetDisableMovementControls(true);
+		} */
+		CamManager = SCR_CameraManager.Cast(g_ARGame.GetCameraManager());
+		OGCamera = CamManager.CurrentCamera();
+		SpectatorCamera = PlayerCamera.Cast(g_Game.SpawnEntity(PlayerCamera));
+	    
+		OGCamera.GetTransform(CurrentCameraTransform);
+		
+	  SpectatorCamera.SetTransform(CurrentCameraTransform);
+		
+		CamManager.SetCamera(SpectatorCamera);
+		
+		CurrentVerticalFOV = OGCamera.GetVerticalFOV();
+
 				
 		SetEventMask(GetOwner(), EntityEvent.POSTFRAME | EntityEvent.FRAME);		
 		
 		IsSpectating = true;
+	}
+	
+	void OnEditorOpened() {
+		StopSpectating();
 	}
 	
 	//------------------------------------------------------------------------------------------------
@@ -282,24 +299,27 @@ class DEUS_SpectatorComponent extends ScriptComponent {
 		ClearEventMask(GetOwner(), EntityEvent.POSTFRAME | EntityEvent.FRAME);	
 		
 		IsSpectating = false;
+		
+		CamManager.SetCamera(OGCamera);
 	}	 
 	
 	//------------------------------------------------------------------------------------------------
 	private void ApplyCameraTransform() {
-		if (IsSpectating && OGCamera) {
-	       	float adjustedLerpFactor = Math.Clamp(LerpFactor, 0, 1);
+		if (IsSpectating && SpectatorCamera) {
+	    float adjustedLerpFactor = Math.Clamp(LerpFactor, 0, 1);
 			
-	        CurrentCameraTransform[3] = vector.Lerp(CurrentCameraTransform[3], TargetCameraTransform[3], adjustedLerpFactor);
+	    CurrentCameraTransform[3] = vector.Lerp(CurrentCameraTransform[3], TargetCameraTransform[3], adjustedLerpFactor);
 			vector angles = vector.Lerp(Math3D.MatrixToAngles(CurrentCameraTransform), Math3D.MatrixToAngles(TargetCameraTransform), adjustedLerpFactor);
 			Math3D.AnglesToMatrix(angles, CurrentCameraTransform);
 			
-	        OGCamera.SetTransform(CurrentCameraTransform);
+	    SpectatorCamera.SetTransform(CurrentCameraTransform);
 			
 			CurrentVerticalFOV = Math.Lerp(CurrentVerticalFOV, TargetVerticalFOV, adjustedLerpFactor);
-			OGCamera.SetVerticalFOV(CurrentVerticalFOV);
-	    } else if (!OGCamera) {
-	        OGCamera = g_ARGame.GetCameraManager().CurrentCamera();
-	    }
+			SpectatorCamera.SetVerticalFOV(CurrentVerticalFOV);
+	   } else if (!SpectatorCamera) {
+	    SpectatorCamera = PlayerCamera.Cast(g_Game.SpawnEntity(PlayerCamera));
+			CamManager.SetCamera(SpectatorCamera);
+	  }
 	}
 	
 	//------------------------------------------------------------------------------------------------
