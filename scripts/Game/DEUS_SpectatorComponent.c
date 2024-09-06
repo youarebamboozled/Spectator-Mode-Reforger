@@ -2,31 +2,31 @@
 class DEUS_SpectatorComponentClass extends ScriptComponentClass { }
 
 class DEUS_SpectatorComponent extends ScriptComponent {
-	private     CameraBase                             	OGCamera;
-	private     PlayerCamera                            SpectatorCamera;
-	private     CharacterIdentityComponent             	IdentityComponent;
-	private     EquipedLoadoutStorageComponent         	ELSComponent;
-	private     IEntity                                	HeadCoverEntity;
-	private     SCR_CharacterCameraHandlerComponent    	CharCameraHandlerComponent;
+	private	 CameraBase							 	OGCamera;
+	private	 PlayerCamera							SpectatorCamera;
+	private	 CharacterIdentityComponent			 	IdentityComponent;
+	private	 EquipedLoadoutStorageComponent		 	ELSComponent;
+	private	 IEntity									HeadCoverEntity;
+	private	 SCR_CharacterCameraHandlerComponent		CharCameraHandlerComponent;
 	private		EventHandlerManagerComponent 			EventHandler;
 	// private		CharacterControllerComponent			CharacterController;
 	
-	private     InputManager                           	Input;
+	private	 InputManager						   	Input;
 	
-	private ref ScriptInvoker                          	OnDamageStateChangedSpec;
+	private ref ScriptInvoker						  	OnDamageStateChangedSpec;
 	
-	protected   bool                                   	IsSpectating;
-	protected   bool                                   	IsBeingSpectated;
-	private     bool                                   	IsSpectatedInFirstPerson;
+	protected   bool								   	IsSpectating;
+	protected   bool								   	IsBeingSpectated;
+	private	 bool								   	IsSpectatedInFirstPerson;
 	
-	private     vector                                 	CurrentCameraTransform[4];
-	private     vector                                 	TargetCameraTransform[4];
+	private	 vector								 	CurrentCameraTransform[4];
+	private	 vector								 	TargetCameraTransform[4];
 	
-	private     const float                            	LerpFactor = 0.05;
-	private     float                                  	TargetVerticalFOV;
-	private     float                                  	CurrentVerticalFOV;
+	private	 const float								LerpFactor = 0.05;
+	private	 float								  	TargetVerticalFOV;
+	private	 float								  	CurrentVerticalFOV;
 	
-	private		RplId                                  	SpectatorId;	
+	private		RplId								  	SpectatorId;	
 	
 	//------------------------------------------------------------------------------------------------
 	void ~DEUS_SpectatorComponent() {
@@ -121,7 +121,7 @@ class DEUS_SpectatorComponent extends ScriptComponent {
 	
 	//------------------------------------------------------------------------------------------------
 	private void OnThirdPersonSwitch() {
-    	bool isInThirdPerson = CharCameraHandlerComponent.IsInThirdPerson();
+		bool isInThirdPerson = CharCameraHandlerComponent.IsInThirdPerson();
 		Rpc(RpcAsk_OnThirdPersonSwitch, SpectatorId, isInThirdPerson);
 	}
 	
@@ -142,64 +142,64 @@ class DEUS_SpectatorComponent extends ScriptComponent {
 	//------------------------------------------------------------------------------------------------
 	[RplRpc(RplChannel.Reliable, RplRcver.Owner)]
 	private void RpcDo_OnThirdPersonSwitch(bool isInThirdPerson) {
-	    IsSpectatedInFirstPerson = !isInThirdPerson;
-	    HideHeadAndAccessories(IsSpectatedInFirstPerson);
+		IsSpectatedInFirstPerson = !isInThirdPerson;
+		HideHeadAndAccessories(IsSpectatedInFirstPerson);
 	}	
 	
 	//------------------------------------------------------------------------------------------------
 	CameraBase SpectatedCamera;
-    private void UpdateSpectatorCamera() {
-        if (!IsBeingSpectated) {
-			return;
-		}
+	private void UpdateSpectatorCamera() {
+	  if (!IsBeingSpectated) {
+				return;
+			}
 
-        SpectatedCamera = g_ARGame.GetCameraManager().CurrentCamera();
-        if (SpectatedCamera) {
+		SpectatedCamera = g_ARGame.GetCameraManager().CurrentCamera();
+		if (SpectatedCamera) {
 			vector mat[4];
-            SpectatedCamera.GetTransform(mat);
+			SpectatedCamera.GetTransform(mat);
 			
-            Rpc(RpcAsk_ReceiveCameraData, SpectatorId, mat, SpectatedCamera.GetVerticalFOV());
-        }
-    }
+			Rpc(RpcAsk_ReceiveCameraData, SpectatorId, mat, SpectatedCamera.GetVerticalFOV());
+		}
+	}
 	
 	//------------------------------------------------------------------------------------------------
-    [RplRpc(RplChannel.Unreliable, RplRcver.Server)]
-    private void RpcAsk_ReceiveCameraData(RplId spectatorId, vector mat[4], float vFOV) {
+	[RplRpc(RplChannel.Unreliable, RplRcver.Server)]
+	private void RpcAsk_ReceiveCameraData(RplId spectatorId, vector mat[4], float vFOV) {
 		IEntity spectator = IEntity.Cast(Replication.FindItem(spectatorId));
 		DEUS_SpectatorComponent comp = DEUS_SpectatorComponent.Cast(spectator.FindComponent(DEUS_SpectatorComponent));
 		
 		comp.ReceiveCameraDataOwner(mat, vFOV);
-    }
+	}
 	
 	//------------------------------------------------------------------------------------------------
-    private void ReceiveCameraDataOwner(vector mat[4], float vFOV) {
+	private void ReceiveCameraDataOwner(vector mat[4], float vFOV) {
 		Rpc(RpcDo_ReceiveCameraData, mat, vFOV);
 	}
 	
 	//------------------------------------------------------------------------------------------------
-    [RplRpc(RplChannel.Unreliable, RplRcver.Owner)]
-    private void RpcDo_ReceiveCameraData(vector mat[4], float vFOV) {
-        TargetCameraTransform = mat;
+	[RplRpc(RplChannel.Unreliable, RplRcver.Owner)]
+	private void RpcDo_ReceiveCameraData(vector mat[4], float vFOV) {
+		TargetCameraTransform = mat;
 		TargetVerticalFOV = vFOV;
-    }    
+	}	
    	
 	//------------------------------------------------------------------------------------------------
-    // Event Methods
-    //------------------------------------------------------------------------------------------------
+	// Event Methods
+	//------------------------------------------------------------------------------------------------
  	
 	//------------------------------------------------------------------------------------------------
 	override void EOnPostFrame(IEntity owner, float timeSlice) {
-	    ApplyCameraTransform();
+		ApplyCameraTransform();
 	}
 	
 	//------------------------------------------------------------------------------------------------
 	override void EOnPostFixedFrame(IEntity owner, float timeSlice) {
-	    UpdateSpectatorCamera();
+		UpdateSpectatorCamera();
 	}
 	
 	//------------------------------------------------------------------------------------------------
 	override void EOnFrame(IEntity owner, float timeSlice) {
-	    ApplyCameraTransform();
+		ApplyCameraTransform();
 	}
 	
 	//------------------------------------------------------------------------------------------------
@@ -215,8 +215,8 @@ class DEUS_SpectatorComponent extends ScriptComponent {
 	}
 	
 	//------------------------------------------------------------------------------------------------
-    // Other Methods
-    //------------------------------------------------------------------------------------------------
+	// Other Methods
+	//------------------------------------------------------------------------------------------------
 	
 	//------------------------------------------------------------------------------------------------
 	SCR_CameraManager CamManager;
@@ -251,6 +251,7 @@ class DEUS_SpectatorComponent extends ScriptComponent {
 		SetBeingSpectated(ent, true);
 	}
 	
+	//------------------------------------------------------------------------------------------------
 	void OnEditorClosed() {
 		Input.AddActionListener("MenuOpen", EActionTrigger.DOWN, OnEscapeDown);
 		
@@ -263,7 +264,7 @@ class DEUS_SpectatorComponent extends ScriptComponent {
 		CamManager = SCR_CameraManager.Cast(g_ARGame.GetCameraManager());
 		OGCamera = CamManager.CurrentCamera();
 		SpectatorCamera = PlayerCamera.Cast(g_Game.SpawnEntity(PlayerCamera));
-	    
+		
 		OGCamera.GetTransform(CurrentCameraTransform);
 		
 	  SpectatorCamera.SetTransform(CurrentCameraTransform);
@@ -278,6 +279,7 @@ class DEUS_SpectatorComponent extends ScriptComponent {
 		IsSpectating = true;
 	}
 	
+	//------------------------------------------------------------------------------------------------
 	void OnEditorOpened() {
 		StopSpectating();
 	}
@@ -306,18 +308,18 @@ class DEUS_SpectatorComponent extends ScriptComponent {
 	//------------------------------------------------------------------------------------------------
 	private void ApplyCameraTransform() {
 		if (IsSpectating && SpectatorCamera) {
-	    float adjustedLerpFactor = Math.Clamp(LerpFactor, 0, 1);
-			
-	    CurrentCameraTransform[3] = vector.Lerp(CurrentCameraTransform[3], TargetCameraTransform[3], adjustedLerpFactor);
+			float adjustedLerpFactor = Math.Clamp(LerpFactor, 0, 1);
+				
+			CurrentCameraTransform[3] = vector.Lerp(CurrentCameraTransform[3], TargetCameraTransform[3], adjustedLerpFactor);
 			vector angles = vector.Lerp(Math3D.MatrixToAngles(CurrentCameraTransform), Math3D.MatrixToAngles(TargetCameraTransform), adjustedLerpFactor);
 			Math3D.AnglesToMatrix(angles, CurrentCameraTransform);
 			
-	    SpectatorCamera.SetTransform(CurrentCameraTransform);
+			SpectatorCamera.SetTransform(CurrentCameraTransform);
 			
 			CurrentVerticalFOV = Math.Lerp(CurrentVerticalFOV, TargetVerticalFOV, adjustedLerpFactor);
 			SpectatorCamera.SetVerticalFOV(CurrentVerticalFOV);
 	   } else if (!SpectatorCamera) {
-	    SpectatorCamera = PlayerCamera.Cast(g_Game.SpawnEntity(PlayerCamera));
+			SpectatorCamera = PlayerCamera.Cast(g_Game.SpawnEntity(PlayerCamera));
 			CamManager.SetCamera(SpectatorCamera);
 	  }
 	}
